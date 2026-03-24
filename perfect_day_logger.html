@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAYSCORE — Perfect Day Logger</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface2: #161616;
+  --border: #1e1e1e;
+  --border-mid: #2a2a2a;
+  --gold: #c8a96e;
+  --gold-dim: rgba(200,169,110,0.15);
+  --gold-glow: rgba(200,169,110,0.08);
+  --green: #4db37e;
+  --green-dim: rgba(77,179,126,0.12);
+  --blue: #5b9bd5;
+  --blue-dim: rgba(91,155,213,0.12);
+  --red: #c05050;
+  --red-dim: rgba(192,80,80,0.12);
+  --text: #d4cfc8;
+  --text-mid: #8a8278;
+  --text-dim: #4a4840;
+  --text-dimmer: #333;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(10,10,10,0.96);
+  backdrop-filter: blur(8px);
+}
+
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 8px;
+  color: var(--gold);
+}
+
+.header-sub {
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding-top: 2px;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn:hover { border-color: var(--border-mid); color: var(--text); }
+.tab-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-glow); }
+
+/* ── MAIN LAYOUT ── */
+.app { max-width: 1060px; margin: 0 auto; padding: 28px 20px; }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── SUMMARY STRIP ── */
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.sum-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sum-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--gold);
+}
+.sum-num.green { color: var(--green); }
+.sum-num.blue  { color: var(--blue); }
+.sum-num.dim   { color: var(--text-dim); }
+
+.sum-lbl {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── LOG SECTION ── */
+.log-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── PANEL ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.panel-head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+
+.panel-body { padding: 20px; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  appearance: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--border-mid);
+}
+
+.form-textarea { resize: vertical; min-height: 80px; }
+
+/* ── DAY TYPE SELECTOR ── */
+.day-type-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.type-btn {
+  padding: 14px 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  transition: all 0.15s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.type-btn span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.type-btn:hover { border-color: var(--border-mid); color: var(--text-mid); }
+.type-btn.selected-perfect {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-glow);
+}
+.type-btn.selected-good {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+/* ── CRITERIA CHECKLIST ── */
+.criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.criteria-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.12s;
+  user-select: none;
+}
+.criteria-item:hover { border-color: var(--border-mid); }
+.criteria-item.checked { border-color: rgba(77,179,126,0.4); background: var(--green-dim); }
+
+.check-box {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 9px;
+  color: var(--green);
+  transition: all 0.12s;
+}
+.criteria-item.checked .check-box { border-color: var(--green); background: var(--green-dim); }
+
+.criteria-label {
+  font-size: 12px;
+  color: var(--text-mid);
+  flex: 1;
+  line-height: 1.4;
+}
+.criteria-item.checked .criteria-label { color: var(--text); }
+
+.criteria-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.criteria-item.checked .criteria-score { color: var(--green); }
+
+/* ── SCORE BAR ── */
+.score-section { margin-bottom: 16px; }
+
+.score-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.score-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--text-mid);
+  line-height: 1;
+}
+.score-num.perfect { color: var(--gold); }
+.score-num.good    { color: var(--green); }
+
+.score-max {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.score-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  margin-bottom: 4px;
+}
+.score-fill {
+  height: 100%;
+  background: var(--text-dim);
+  transition: width 0.3s ease, background 0.3s;
+}
+.score-fill.perfect { background: var(--gold); }
+.score-fill.good    { background: var(--green); }
+
+.score-status {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.score-status.perfect { color: var(--gold); }
+.score-status.good    { color: var(--green); }
+
+/* ── SUBMIT BTN ── */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--gold);
+  background: var(--gold-glow);
+  color: var(--gold);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.submit-btn:hover { background: var(--gold-dim); }
+.submit-btn:disabled {
+  border-color: var(--border);
+  color: var(--text-dim);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+/* ── LOG LIST ── */
+.log-list { display: flex; flex-direction: column; gap: 8px; }
+
+.log-entry {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.log-entry:hover { border-color: var(--border-mid); }
+
+.entry-main {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.entry-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 4px 9px;
+  flex-shrink: 0;
+}
+.badge-perfect { color: var(--gold); border: 1px solid rgba(200,169,110,0.4); background: var(--gold-glow); }
+.badge-good    { color: var(--green); border: 1px solid rgba(77,179,126,0.4); background: var(--green-dim); }
+.badge-bad     { color: var(--red); border: 1px solid rgba(192,80,80,0.4); background: var(--red-dim); }
+
+.entry-date {
+  font-size: 11px;
+  color: var(--text-mid);
+  min-width: 90px;
+}
+
+.entry-score-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-track {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+}
+.mini-fill {
+  height: 100%;
+  background: var(--text-dim);
+}
+.mini-fill.perfect { background: var(--gold); }
+.mini-fill.good    { background: var(--green); }
+.mini-fill.bad     { background: var(--red); }
+
+.entry-score-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--text-dim);
+  min-width: 40px;
+  text-align: right;
+}
+
+.entry-note-preview {
+  font-size: 10px;
+  color: var(--text-dim);
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entry-expand {
+  display: none;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  gap: 16px;
+  flex-direction: column;
+}
+.log-entry.open .entry-expand { display: flex; }
+
+.expand-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exp-chip {
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border: 1px solid rgba(77,179,126,0.3);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.expand-note {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  font-style: italic;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+
+.entry-delete {
+  margin-left: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-dimmer);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+.entry-delete:hover { color: var(--red); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.empty-state-icon {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px;
+  letter-spacing: 8px;
+  color: var(--text-dimmer);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* ── CRITERIA MANAGER ── */
+.criteria-mgr { max-width: 640px; }
+
+.criteria-mgr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mgr-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.mgr-item-name { font-size: 12px; color: var(--text); }
+
+.mgr-weight {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  min-width: 30px;
+  text-align: right;
+}
+
+.mgr-del {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 3px 7px;
+  transition: color 0.15s;
+}
+.mgr-del:hover { color: var(--red); }
+
+.add-criteria-row {
+  display: grid;
+  grid-template-columns: 1fr 80px auto;
+  gap: 10px;
+}
+
+.add-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.add-btn:hover { border-color: var(--border-mid); color: var(--text); }
+
+/* ── STATS VIEW ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.stat-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.stat-ph { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.stat-pb { padding: 20px; }
+
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bar-lbl { font-size: 10px; color: var(--text-dim); min-width: 70px; }
+.bar-track { flex: 1; height: 4px; background: var(--border); }
+.bar-fill-gold { height: 100%; background: var(--gold); }
+.bar-fill-green { height: 100%; background: var(--green); }
+.bar-val { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--text-mid); min-width: 24px; text-align: right; }
+
+.dist-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dist-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.dist-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 1;
+  display: block;
+}
+.dist-lbl {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── CALENDAR HEATMAP ── */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  background: var(--border);
+  border-radius: 2px;
+  position: relative;
+  cursor: default;
+}
+.cal-day.perfect { background: var(--gold); opacity: 0.8; }
+.cal-day.good    { background: var(--green); opacity: 0.7; }
+.cal-day.bad     { background: var(--red); opacity: 0.6; }
+.cal-day.today   { outline: 1px solid var(--text-mid); }
+
+.cal-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.cal-lbl { font-size: 8px; letter-spacing: 1px; color: var(--text-dim); text-align: center; }
+
+/* ── INSIGHTS ── */
+.insight-block { margin-bottom: 24px; }
+.insight-block:last-child { margin-bottom: 0; }
+.insight-heading {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.insight-item:last-child { border-bottom: none; }
+.insight-rank {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--text-dimmer);
+  min-width: 24px;
+}
+.insight-body { flex: 1; }
+.insight-name {
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.insight-meta {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+.insight-pct {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--red);
+  min-width: 44px;
+  text-align: right;
+}
+.insight-pct.ok { color: var(--green); }
+.corr-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.8;
+}
+.corr-item:last-child { border-bottom: none; }
+.corr-highlight { color: var(--gold); }
+.week-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.week-nav-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.week-nav-btn:hover { border-color: var(--border-mid); color: var(--text); }
+.week-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  flex: 1;
+  text-align: center;
+}
+.no-data-msg {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 32px 0;
+  text-transform: uppercase;
+}
+
+/* ── REWARDS ── */
+.rewards-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 720px) { .rewards-layout { grid-template-columns: 1fr; } }
+
+.reward-status-panel {}
+
+.reward-progress-wrap { margin-bottom: 20px; }
+.reward-progress-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.reward-progress-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 1;
+  color: var(--text-dim);
+}
+.reward-progress-num.unlocked { color: var(--gold); }
+.reward-progress-denom {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.reward-track {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  margin-bottom: 6px;
+}
+.reward-fill {
+  height: 100%;
+  background: var(--text-dim);
+  transition: width 0.4s ease, background 0.4s;
+}
+.reward-fill.unlocked { background: var(--gold); }
+.reward-status-msg {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.reward-status-msg.unlocked { color: var(--gold); }
+.reward-days-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.reward-day-pip {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  flex-direction: column;
+  gap: 2px;
+}
+.reward-day-pip.perfect { border-color: var(--gold); background: var(--gold-glow); color: var(--gold); }
+.reward-day-pip.good    { border-color: rgba(77,179,126,0.4); background: var(--green-dim); color: var(--green); }
+.reward-day-pip.bad     { border-color: rgba(192,80,80,0.2); color: var(--text-dimmer); }
+.reward-day-pip.empty   { opacity: 0.3; }
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.reward-item:last-child { border-bottom: none; }
+.reward-item-name { flex: 1; font-size: 12px; color: var(--text); }
+.reward-claim-btn {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.reward-claim-btn:hover { background: var(--gold-glow); }
+.reward-claim-btn:disabled {
+  border-color: var(--border);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+.reward-del-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dimmer);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: color 0.15s;
+}
+.reward-del-btn:hover { color: var(--red); }
+.reward-tag-chip {
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid var(--border-mid);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.claim-hist-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.claim-hist-item:last-child { border-bottom: none; }
+.claim-hist-date { color: var(--text-dim); min-width: 90px; font-size: 10px; }
+.claim-hist-name { color: var(--text); flex: 1; }
+.claim-hist-week { color: var(--text-dim); font-size: 9px; letter-spacing: 1px; }
+
+.unlock-banner {
+  background: var(--gold-glow);
+  border: 1px solid rgba(200,169,110,0.3);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: center;
+}
+
+/* ── EDIT MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  width: 100%;
+  max-width: 460px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--text-mid); }
+.modal-close {
+  background: transparent; border: none; color: var(--text-dim);
+  font-size: 14px; cursor: pointer; padding: 2px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.modal-save {
+  padding: 12px; border: 1px solid var(--gold); background: var(--gold-glow);
+  color: var(--gold); font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+  letter-spacing: 4px; cursor: pointer; transition: all 0.15s;
+}
+.modal-save:hover { background: var(--gold-dim); }
+.modal-cancel {
+  padding: 12px; border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+  letter-spacing: 4px; cursor: pointer; transition: all 0.15s;
+}
+.modal-cancel:hover { border-color: var(--border-mid); color: var(--text); }
+.edit-entry-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; padding: 4px 10px;
+  cursor: pointer; text-transform: uppercase; transition: all 0.15s;
+}
+.edit-entry-btn:hover { border-color: var(--border-mid); color: var(--text); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  padding: 12px 24px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  z-index: 999;
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 720px) {
+  .log-grid { grid-template-columns: 1fr; }
+  .summary-strip { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid { grid-template-columns: 1fr; }
+  .add-criteria-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">DAYSCORE</div>
+    <div class="header-sub">Perfect Day Logger</div>
+  </div>
+  <div class="header-right">
+    <button class="tab-btn active" onclick="showView('log')">LOG DAY</button>
+    <button class="tab-btn" onclick="showView('history')">HISTORY</button>
+    <button class="tab-btn" onclick="showView('stats')">STATS</button>
+
+    <button class="tab-btn" onclick="showView('rewards')" id="rewards-tab-btn">REWARDS</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ── LOG VIEW ── -->
+  <div class="view active" id="view-log">
+    <div class="summary-strip" id="summary-strip"></div>
+    <div class="log-grid">
+
+      <!-- LEFT: Entry form -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Today</span>
+            <span id="form-date-display" style="font-size:10px;color:var(--text-dim);letter-spacing:1px;"></span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Unclosed yesterday banner -->
+            <div id="unclosed-banner" style="display:none;background:rgba(192,80,80,0.1);border:1px solid rgba(192,80,80,0.3);padding:12px 14px;margin-bottom:16px;">
+              <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:6px;">⚠ Unclosed Day</div>
+              <div style="font-size:11px;color:var(--text-mid);margin-bottom:10px;" id="unclosed-msg"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <button class="submit-btn" style="margin:0;font-size:13px;padding:10px;" onclick="closeUnclosedDay()">CLOSE IT NOW</button>
+                <button class="submit-btn" style="margin:0;font-size:13px;padding:10px;border-color:var(--border);color:var(--text-dim);background:transparent;" onclick="discardUnclosedDay()">DISCARD</button>
+              </div>
+            </div>
+
+            <div id="active-day-ui">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div>
+                  <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px;">Today</div>
+                  <div style="font-size:13px;color:var(--text);" id="active-day-date"></div>
+                </div>
+                <div id="active-day-status" style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);"></div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Tick as you go</label>
+                <div class="criteria-list" id="criteria-list-form"></div>
+              </div>
+
+              <div class="score-section">
+                <div class="score-header">
+                  <span class="score-num" id="score-display">0</span>
+                  <span class="score-max" id="score-max-display">/ 0 PTS</span>
+                </div>
+                <div class="score-track">
+                  <div class="score-fill" id="score-fill" style="width:0%"></div>
+                </div>
+                <div class="score-status" id="score-status">— TICK YOUR FIRST HABIT</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Notes (optional)</label>
+                <textarea class="form-textarea" id="entry-notes" placeholder="Reflections for today..."></textarea>
+              </div>
+
+              <button class="submit-btn" id="submit-btn" onclick="closeDay()">CLOSE DAY</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Recent entries -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Recent Entries</span>
+            <span id="entry-count" style="font-size:9px;color:var(--text-dim);letter-spacing:2px;"></span>
+          </div>
+          <div class="panel-body" style="padding:12px;">
+            <div id="recent-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HISTORY VIEW ── -->
+  <div class="view" id="view-history">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">All Entries</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select class="form-select" id="filter-type" style="width:auto;font-size:10px;padding:5px 10px;" onchange="renderHistory()">
+            <option value="all">ALL TYPES</option>
+            <option value="perfect">PERFECT ONLY</option>
+            <option value="good">GOOD ONLY</option>
+            <option value="bad">BAD ONLY</option>
+          </select>
+          <button class="tab-btn" style="padding:5px 12px;font-size:9px;" onclick="exportData()">EXPORT</button>
+          <label class="tab-btn" style="padding:5px 12px;font-size:9px;cursor:pointer;">
+            IMPORT<input type="file" accept=".json" style="display:none;" onchange="importData(event)" />
+          </label>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:12px;">
+        <div id="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS VIEW ── -->
+  <div class="view" id="view-stats">
+    <div class="stats-grid">
+      <div class="stat-panel">
+        <div class="stat-ph"><span class="panel-title">Distribution</span></div>
+        <div class="stat-pb" id="stats-dist"></div>
+      </div>
+      <div class="stat-panel">
+        <div class="stat-ph"><span class="panel-title">Top Criteria Hit Rate</span></div>
+        <div class="stat-pb" id="stats-criteria-bars"></div>
+      </div>
+      <div class="stat-panel" style="grid-column:1/-1;">
+        <div class="stat-ph"><span class="panel-title">Activity Heatmap — Last 90 Days</span></div>
+        <div class="stat-pb" id="stats-heatmap"></div>
+      </div>
+      <div class="stat-panel" style="grid-column:1/-1;">
+        <div class="stat-ph">
+          <span class="panel-title">Weekly Insights</span>
+          <span style="font-size:9px;color:var(--text-dim);letter-spacing:2px;" id="insights-week-label"></span>
+        </div>
+        <div class="stat-pb" id="stats-insights"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CRITERIA VIEW ── -->
+  <div class="view" id="view-criteria">
+    <div class="panel criteria-mgr">
+      <div class="panel-head">
+        <span class="panel-title">Manage Criteria</span>
+        <span style="font-size:9px;color:var(--text-dim);letter-spacing:2px;" id="criteria-count-display"></span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:10px;color:var(--text-dim);letter-spacing:1px;line-height:1.8;margin-bottom:20px;">
+          Define what makes a perfect or good day. Each criterion has a point weight — a <strong style="color:var(--gold)">perfect day</strong> is achieved when all criteria are checked.
+        </p>
+        <div class="criteria-mgr-list" id="criteria-mgr-list"></div>
+        <div class="add-criteria-row">
+          <input class="form-input" id="new-criteria-name" placeholder="e.g. Exercise completed" maxlength="60" />
+          <input class="form-input" id="new-criteria-weight" type="number" min="1" max="99" placeholder="Pts" value="10" />
+          <button class="add-btn" onclick="addCriteria()">+ ADD</button>
+        </div>
+        <p style="font-size:9px;color:var(--text-dimmer);margin-top:12px;letter-spacing:1px;">Points determine the weight of each item in your daily score.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REWARDS VIEW ── -->
+  <div class="view" id="view-rewards">
+    <div class="rewards-layout">
+
+      <!-- Status card -->
+      <div class="panel reward-status-panel">
+        <div class="panel-head">
+          <span class="panel-title">This Week</span>
+          <span id="reward-week-range" style="font-size:9px;color:var(--text-dim);letter-spacing:2px;"></span>
+        </div>
+        <div class="panel-body" id="reward-status-body"></div>
+      </div>
+
+      <!-- Reward list -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">My Rewards</span>
+          <span id="reward-count-display" style="font-size:9px;color:var(--text-dim);letter-spacing:2px;"></span>
+        </div>
+        <div class="panel-body" id="reward-list-body"></div>
+        <div class="panel-body" style="padding-top:0;border-top:1px solid var(--border);">
+          <p style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Add Reward</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input class="form-input" id="new-reward-name" placeholder="e.g. Massage, New trainers..." maxlength="60" style="flex:1;" />
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <select class="form-select" id="new-reward-tag" style="width:100%;font-size:11px;">
+              <option value="">No tag</option>
+              <option value="experience">✨ Experience</option>
+              <option value="social">👥 Social</option>
+              <option value="health">💪 Health</option>
+              <option value="lady">🌙 Lady of the Night</option>
+              <option value="holiday">✈️ Holiday</option>
+              <option value="restaurant">🍴 Restaurant</option>
+            </select>
+          </div>
+          <button class="add-btn" onclick="addReward()" style="width:100%;">+ ADD REWARD</button>
+        </div>
+      </div>
+
+      <!-- Claim history -->
+      <div class="panel" style="grid-column:1/-1;">
+        <div class="panel-head"><span class="panel-title">Claim History</span></div>
+        <div class="panel-body" id="reward-history-body"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="edit-modal" style="display:none;" class="modal-overlay" onclick="closeEditModal(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Edit Entry</span>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="edit-date" disabled style="opacity:0.5;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Criteria Achieved</label>
+        <div class="criteria-list" id="edit-criteria-list"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="edit-notes" placeholder="Notes..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-save" onclick="saveEditEntry()">SAVE</button>
+        <button class="modal-cancel" onclick="closeEditModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let state = {
+  entries: [],
+  criteria: [
+    { id: 10, name: '$60 profit day', weight: 15 },
+    { id: 13, name: 'Semen retention', weight: 10 },
+    { id: 9, name: '3 min gratitude prayer', weight: 10 },
+    { id: 17, name: '3 min affirmation to God', weight: 10 },
+    { id: 3, name: 'Exercise done', weight: 10 },
+    { id: 6, name: 'In bed by midnight', weight: 5 },
+    { id: 12, name: 'No skin picking', weight: 10 },
+    { id: 11, name: 'Wake up by 8:15am', weight: 5 },
+    { id: 14, name: 'No dairy', weight: 5 },
+    { id: 15, name: 'No food after 8pm', weight: 5 },
+    { id: 16, name: 'No trades after 10:30pm', weight: 5 },
+    { id: 21, name: 'Go for a walk', weight: 5 },
+  ],
+  nextCriteriaId: 22,
+  selectedType: null,
+  checkedCriteria: [],
+  activeDay: null, // { date, checkedCriteria, notes } — in-progress day not yet closed
+  rewards: [],
+  nextRewardId: 1,
+  claimedRewards: []
+};
+
+function save() {
+  localStorage.setItem('dayscore_state', JSON.stringify(state));
+}
+
+function load() {
+  const raw = localStorage.getItem('dayscore_state');
+  if (raw) {
+    try {
+      const saved = JSON.parse(raw);
+      state.entries = saved.entries || [];
+      state.criteria = saved.criteria || state.criteria;
+      state.nextCriteriaId = saved.nextCriteriaId || 10;
+      state.rewards = saved.rewards || [];
+      state.nextRewardId = saved.nextRewardId || 1;
+      state.claimedRewards = saved.claimedRewards || [];
+      state.activeDay = saved.activeDay || null;
+    } catch(e) {}
+  }
+}
+
+// ── TABS ──
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.target.classList.add('active');
+  if (v === 'history') renderHistory();
+  if (v === 'stats') renderStats();
+  if (v === 'criteria') renderCriteriaManager();
+  if (v === 'rewards') renderRewards();
+  if (v === 'log') { renderSummary(); renderRecentList(); }
+}
+
+// ── DATE ──
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function fmtDate(d) {
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── TYPE SELECT ──
+function selectType(t) {
+  state.selectedType = t;
+  document.getElementById('btn-perfect').className = 'type-btn' + (t === 'perfect' ? ' selected-perfect' : '');
+  document.getElementById('btn-good').className = 'type-btn' + (t === 'good' ? ' selected-good' : '');
+  updateScoreDisplay();
+}
+
+// ── CRITERIA FORM ──
+// IDs: 10=$100 profit, 13=semen, 9=gratitude prayer, 17=affirmation, 3=exercise,
+//       6=bed midnight, 12=no skin, 11=wake 8:15, 14=no dairy, 15=no food 8pm, 16=no trades
+const WEEKEND_ONLY_IDS = [18]; // call family — added dynamically on Sat/Sun
+const SAT_REMOVED_IDS = [3, 10, 15];   // exercise, $100 profit, no food after 8pm — removed Saturday
+const SUN_REMOVED_IDS = [10, 11];       // $100 profit, wake up — removed Sunday
+const FRI_SAT_REMOVED_IDS = [6]; // bed by midnight — removed Fri + Sat
+const SUNDAY_EXTRAS = [{ id: 19, name: '30 min Spanish practice', weight: 10 }];
+const FRIDAY_EXTRAS = [{ id: 20, name: '30 min Spanish practice', weight: 10 }];
+const MON_FRI_EXTRAS = [{ id: 22, name: 'Watch motivational video', weight: 5 }];
+
+function getDayOfWeek() {
+  const dateVal = state.activeDay ? state.activeDay.date : today();
+  return new Date(dateVal + 'T12:00:00').getDay(); // 0=Sun,1=Mon...6=Sat
+}
+
+function getActiveCriteria() {
+  const dow = getDayOfWeek();
+  const isSat = dow === 6;
+  const isSun = dow === 0;
+  const isFri = dow === 5;
+  const isWeekend = isSat || isSun;
+
+  return state.criteria.filter(c => {
+    if (SAT_REMOVED_IDS.includes(c.id) && isSat) return false;
+    if (SUN_REMOVED_IDS.includes(c.id) && isSun) return false;
+    if (FRI_SAT_REMOVED_IDS.includes(c.id) && (isFri || isSat)) return false;
+    return true;
+  }).concat(isWeekend ? [{ id: 18, name: 'Text, call or visit family or friend', weight: 10 }] : [])
+    .concat(isSun ? SUNDAY_EXTRAS : [])
+    .concat(isFri ? FRIDAY_EXTRAS : [])
+    .concat(!isWeekend ? MON_FRI_EXTRAS : []);
+}
+
+function getCriteriaLabel(cr) {
+  if (cr.id === 16) {
+    const dow = getDayOfWeek();
+    if (dow === 6) return 'No trading today';
+    if (dow === 0) return 'No trading today';
+  }
+  if (cr.id === 11 && getDayOfWeek() === 6) return 'Wake up by 8:30am';
+  if (cr.id === 11 && getDayOfWeek() === 0) return 'Wake up by 9:00am';
+  return cr.name;
+}
+
+function renderCriteriaForm() {
+  const c = document.getElementById('criteria-list-form');
+  const active = getActiveCriteria();
+  if (!active.length) {
+    c.innerHTML = '<p style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">No criteria set.</p>';
+    return;
+  }
+  c.innerHTML = active.map(cr => {
+    const checked = state.checkedCriteria.includes(cr.id);
+    const label = getCriteriaLabel(cr);
+    return `<div class="criteria-item ${checked ? 'checked' : ''}" onclick="toggleCriteria(${cr.id})">
+      <div class="check-box">${checked ? '✓' : ''}</div>
+      <span class="criteria-label">${label}</span>
+      <span class="criteria-score">${cr.weight}pt</span>
+    </div>`;
+  }).join('');
+}
+
+
+
+function updateScoreDisplay() {
+  const active = getActiveCriteria();
+  const total = active.reduce((s, c) => s + c.weight, 0);
+  const earned = active
+    .filter(c => state.checkedCriteria.includes(c.id))
+    .reduce((s, c) => s + c.weight, 0);
+  const pct = total ? (earned / total) * 100 : 0;
+  const isPerfect = pct === 100 && state.criteria.length > 0;
+  const cls = isPerfect ? 'perfect' : (pct >= 60 ? 'good' : '');
+
+  const sd = document.getElementById('score-display');
+  const sf = document.getElementById('score-fill');
+  const ss = document.getElementById('score-status');
+  const sm = document.getElementById('score-max-display');
+
+  sd.textContent = earned;
+  sd.className = 'score-num ' + cls;
+  sm.textContent = `/ ${total} PTS`;
+  sf.style.width = pct + '%';
+  sf.className = 'score-fill ' + cls;
+  ss.className = 'score-status ' + cls;
+  ss.textContent = isPerfect ? '◈ PERFECT DAY ACHIEVED' : pct >= 60 ? '◇ GOOD DAY' : pct > 0 ? `${Math.round(pct)}% COMPLETE` : '— SELECT CRITERIA';
+}
+
+// ── SUBMIT ──
+// ── ACTIVE DAY — live ticking ──
+function initActiveDay() {
+  // If no active day, start one for today
+  if (!state.activeDay) {
+    state.activeDay = { date: today(), checkedCriteria: [], notes: '' };
+    save();
+  }
+  // Sync checkedCriteria from activeDay
+  state.checkedCriteria = [...state.activeDay.checkedCriteria];
+  document.getElementById('entry-notes').value = state.activeDay.notes || '';
+  updateActiveDayUI();
+}
+
+function updateActiveDayUI() {
+  const el = document.getElementById('active-day-date');
+  if (el) el.textContent = fmtDate(state.activeDay ? state.activeDay.date : today());
+  const status = document.getElementById('active-day-status');
+  if (status) {
+    const n = state.checkedCriteria.length;
+    status.textContent = n > 0 ? n + ' DONE' : 'IN PROGRESS';
+  }
+}
+
+function toggleCriteria(id) {
+  const i = state.checkedCriteria.indexOf(id);
+  if (i === -1) state.checkedCriteria.push(id);
+  else state.checkedCriteria.splice(i, 1);
+  // Auto-save to activeDay
+  if (state.activeDay) {
+    state.activeDay.checkedCriteria = [...state.checkedCriteria];
+    save();
+  }
+  renderCriteriaForm();
+  updateScoreDisplay();
+  updateActiveDayUI();
+}
+
+function closeDay() {
+  if (!state.activeDay) return;
+  const notes = document.getElementById('entry-notes').value.trim();
+  state.activeDay.notes = notes;
+  commitDay(state.activeDay);
+  state.activeDay = null;
+  state.checkedCriteria = [];
+  save();
+  document.getElementById('entry-notes').value = '';
+  initActiveDay();
+  renderSummary();
+  renderRecentList();
+  showToast('DAY CLOSED ◈');
+}
+
+function commitDay(dayData) {
+  const exists = state.entries.find(e => e.date === dayData.date);
+  if (exists) return; // already logged
+  // Score against the criteria active on that day
+  const dow = new Date(dayData.date + 'T12:00:00').getDay();
+  const isSat = dow === 6; const isSun = dow === 0; const isFri = dow === 5;
+  const isWeekend = isSat || isSun;
+  const dayCriteria = state.criteria.filter(c => {
+    if (SAT_REMOVED_IDS.includes(c.id) && isSat) return false;
+    if (SUN_REMOVED_IDS.includes(c.id) && isSun) return false;
+    if (FRI_SAT_REMOVED_IDS.includes(c.id) && (isFri || isSat)) return false;
+    return true;
+  }).concat(isWeekend ? [{ id: 18, name: 'Text, call or visit family or friend', weight: 10 }] : [])
+    .concat(isSun ? SUNDAY_EXTRAS : []);
+  const total = dayCriteria.reduce((s, c) => s + c.weight, 0);
+  const earned = dayCriteria.filter(c => dayData.checkedCriteria.includes(c.id)).reduce((s,c) => s+c.weight, 0);
+  const pct = total ? (earned / total) * 100 : 0;
+  let type;
+  if (pct === 100 && state.criteria.length > 0) type = 'perfect';
+  else if (pct >= 70) type = 'good';
+  else type = 'bad';
+  state.entries.unshift({
+    id: Date.now(),
+    date: dayData.date,
+    type,
+    checkedCriteria: [...dayData.checkedCriteria],
+    score: earned,
+    maxScore: total,
+    notes: dayData.notes || ''
+  });
+}
+
+// ── UNCLOSED DAY (opened next morning) ──
+function checkUnclosedDay() {
+  const banner = document.getElementById('unclosed-banner');
+  if (!banner) return;
+  if (state.activeDay && state.activeDay.date !== today()) {
+    const msg = document.getElementById('unclosed-msg');
+    msg.textContent = 'You have an unclosed day from ' + fmtDate(state.activeDay.date) + '. Close it to save it to your log.';
+    banner.style.display = 'block';
+    document.getElementById('active-day-ui').style.opacity = '0.4';
+    document.getElementById('active-day-ui').style.pointerEvents = 'none';
+  } else {
+    banner.style.display = 'none';
+    document.getElementById('active-day-ui').style.opacity = '1';
+    document.getElementById('active-day-ui').style.pointerEvents = 'auto';
+  }
+}
+
+function closeUnclosedDay() {
+  if (!state.activeDay) return;
+  const notes = document.getElementById('entry-notes').value.trim();
+  state.activeDay.notes = notes;
+  commitDay(state.activeDay);
+  state.activeDay = { date: today(), checkedCriteria: [], notes: '' };
+  state.checkedCriteria = [];
+  save();
+  document.getElementById('entry-notes').value = '';
+  document.getElementById('unclosed-banner').style.display = 'none';
+  document.getElementById('active-day-ui').style.opacity = '1';
+  document.getElementById('active-day-ui').style.pointerEvents = 'auto';
+  renderCriteriaForm();
+  updateScoreDisplay();
+  updateActiveDayUI();
+  renderSummary();
+  renderRecentList();
+  showToast('YESTERDAY CLOSED — TODAY STARTED ◈');
+}
+
+function discardUnclosedDay() {
+  if (!confirm('Discard ' + fmtDate(state.activeDay.date) + ' without saving?')) return;
+  state.activeDay = { date: today(), checkedCriteria: [], notes: '' };
+  state.checkedCriteria = [];
+  save();
+  document.getElementById('entry-notes').value = '';
+  document.getElementById('unclosed-banner').style.display = 'none';
+  document.getElementById('active-day-ui').style.opacity = '1';
+  document.getElementById('active-day-ui').style.pointerEvents = 'auto';
+  renderCriteriaForm();
+  updateScoreDisplay();
+  updateActiveDayUI();
+  showToast('DAY DISCARDED');
+}
+
+// ── SUMMARY ──
+function renderSummary() {
+  const perfect = state.entries.filter(e => e.type === 'perfect').length;
+  const good = state.entries.filter(e => e.type === 'good').length;
+  const bad = state.entries.filter(e => e.type === 'bad').length;
+  const total = state.entries.length;
+
+  // streak
+  let streak = 0;
+  const sorted = [...state.entries].sort((a,b) => b.date.localeCompare(a.date));
+  const todayStr = today();
+  let check = todayStr;
+  for (const e of sorted) {
+    if (e.date === check) { streak++; const d = new Date(check + 'T12:00:00'); d.setDate(d.getDate()-1); check = d.toISOString().split('T')[0]; }
+    else if (e.date < check) break;
+  }
+
+  // Check if today is not yet logged — warn if streak at risk
+  const todayLogged = state.entries.some(e => e.date === todayStr);
+  const streakAtRisk = streak >= 1 && !todayLogged;
+  const streakWarning = streakAtRisk
+    ? `<div style="grid-column:1/-1;background:rgba(192,80,80,0.08);border:1px solid rgba(192,80,80,0.3);padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div>
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:2px;">Streak at risk</div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:0.5px;">You have a ${streak}-day streak but haven't logged today. Log now to keep it alive.</div>
+        </div>
+      </div>` : '';
+
+  document.getElementById('summary-strip').innerHTML = `
+    ${streakWarning}
+    <div class="sum-card"><span class="sum-num">${perfect}</span><span class="sum-lbl">Perfect Days</span></div>
+    <div class="sum-card"><span class="sum-num green">${good}</span><span class="sum-lbl">Good Days</span></div>
+    <div class="sum-card"><span class="sum-num" style="color:var(--red)">${bad}</span><span class="sum-lbl">Bad Days</span></div>
+    <div class="sum-card"><span class="sum-num ${streak > 0 ? '' : 'dim'}">${streak}</span><span class="sum-lbl">Day Streak</span></div>
+  `;
+}
+
+// ── RECENT LIST ──
+function renderRecentList() {
+  const el = document.getElementById('recent-list');
+  const ec = document.getElementById('entry-count');
+  const items = state.entries.slice(0, 15);
+  ec.textContent = state.entries.length + ' TOTAL';
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-state-icon">◈</span><p>No entries yet</p></div>`;
+    return;
+  }
+  el.innerHTML = renderEntryList(items, false);
+  bindEntryClicks(el);
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const filt = document.getElementById('filter-type').value;
+  let items = [...state.entries].sort((a,b) => b.date.localeCompare(a.date));
+  if (filt !== 'all') items = items.filter(e => e.type === filt);
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-state-icon">◈</span><p>No entries</p></div>`;
+    return;
+  }
+  el.innerHTML = renderEntryList(items, true);
+  bindEntryClicks(el);
+}
+
+function renderEntryList(items, showDelete) {
+  return '<div class="log-list">' + items.map(e => {
+    const pct = e.maxScore ? (e.score / e.maxScore) * 100 : 0;
+    const badgeLabel = e.type === 'perfect' ? '◈ PERFECT' : e.type === 'good' ? '◇ GOOD' : '✕ BAD DAY';
+    const names = (e.checkedCriteria || []).map(id => {
+      const cr = state.criteria.find(c => c.id === id);
+      return cr ? `<span class="exp-chip">${cr.name}</span>` : '';
+    }).filter(Boolean).join('');
+    const noteHtml = e.notes ? `<div class="expand-note">${e.notes}</div>` : '';
+    return `<div class="log-entry" data-id="${e.id}">
+      <div class="entry-main">
+        <span class="entry-badge badge-${e.type}">${badgeLabel}</span>
+        <span class="entry-date">${fmtDate(e.date)}</span>
+        <div class="entry-score-bar">
+          <div class="mini-track"><div class="mini-fill ${e.type}" style="width:${pct}%"></div></div>
+          <span class="entry-score-num">${e.score}</span>
+        </div>
+        <span class="entry-note-preview">${e.notes || ''}</span>
+      </div>
+      <div class="entry-expand">
+        ${names ? `<div class="expand-chips">${names}</div>` : ''}
+        ${noteHtml}
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="edit-entry-btn" onclick="openEditModal(${e.id}, event)">EDIT</button>
+          ${showDelete ? `<button class="entry-delete" onclick="confirmDeleteEntry(${e.id}, event)">DELETE</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function bindEntryClicks(container) {
+  container.querySelectorAll('.entry-main').forEach(el => {
+    el.addEventListener('click', function(e) {
+      if (e.target.classList.contains('entry-delete')) return;
+      const entry = el.closest('.log-entry');
+      entry.classList.toggle('open');
+    });
+  });
+}
+
+
+
+// ── STATS ──
+function renderStats() {
+  const perfect = state.entries.filter(e => e.type === 'perfect').length;
+  const good = state.entries.filter(e => e.type === 'good').length;
+  const bad = state.entries.filter(e => e.type === 'bad').length;
+
+  document.getElementById('stats-dist').innerHTML = `
+    <div class="dist-row">
+      <div class="dist-card">
+        <span class="dist-n" style="color:var(--gold)">${perfect}</span>
+        <span class="dist-lbl">Perfect Days</span>
+      </div>
+      <div class="dist-card">
+        <span class="dist-n" style="color:var(--green)">${good}</span>
+        <span class="dist-lbl">Good Days</span>
+      </div>
+      <div class="dist-card" style="grid-column:1/-1;">
+        <span class="dist-n" style="color:var(--red)">${bad}</span>
+        <span class="dist-lbl">Bad Days</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;font-size:10px;color:var(--text-dim);letter-spacing:1px;">
+      Total: ${state.entries.length} days logged
+    </div>`;
+
+  // criteria hit rates
+  const hits = {};
+  state.criteria.forEach(c => hits[c.id] = 0);
+  const n = state.entries.length;
+  state.entries.forEach(e => {
+    (e.checkedCriteria || []).forEach(id => { if (hits[id] !== undefined) hits[id]++; });
+  });
+
+  const sorted = state.criteria.map(c => ({ ...c, rate: n ? (hits[c.id] || 0) / n : 0 })).sort((a,b) => b.rate - a.rate);
+  const barsHtml = sorted.slice(0, 8).map(c => {
+    return `<div class="bar-row">
+      <span class="bar-lbl">${c.name.split(' ').slice(0,2).join(' ')}…</span>
+      <div class="bar-track"><div class="bar-fill-gold" style="width:${Math.round(c.rate*100)}%"></div></div>
+      <span class="bar-val">${Math.round(c.rate*100)}%</span>
+    </div>`;
+  }).join('');
+  document.getElementById('stats-criteria-bars').innerHTML = `<div class="bar-chart">${barsHtml || '<p style="font-size:10px;color:var(--text-dim);">No data yet</p>'}</div>`;
+
+  // heatmap
+  const days = 91;
+  const today = new Date(); today.setHours(12);
+  const entryMap = {};
+  state.entries.forEach(e => entryMap[e.date] = e.type);
+
+  const labels = ['S','M','T','W','T','F','S'];
+  const startDow = new Date(today); startDow.setDate(startDow.getDate() - days);
+  const offset = startDow.getDay(); // pad to week start
+  const startPad = new Date(startDow); startPad.setDate(startPad.getDate() - offset);
+
+  let cells = '<div class="cal-labels">' + labels.map(l => `<span class="cal-lbl">${l}</span>`).join('') + '</div>';
+  cells += '<div class="cal-grid">';
+  for (let i = 0; i <= days + offset; i++) {
+    const d = new Date(startPad); d.setDate(d.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const type = entryMap[ds] || '';
+    const isToday = ds === today.toISOString().split('T')[0];
+    cells += `<div class="cal-day ${type} ${isToday ? 'today' : ''}" title="${ds}${type ? ' — ' + type : ''}"></div>`;
+  }
+  cells += '</div>';
+  document.getElementById('stats-heatmap').innerHTML = cells;
+  renderInsights();
+}
+
+// ── INSIGHTS ──
+let insightWeekOffset = 0; // 0 = current week, -1 = last week etc.
+
+function getWeekEntries(offset) {
+  const now = new Date(); now.setHours(12,0,0,0);
+  const dow = now.getDay(); // 0=Sun
+  const monday = new Date(now); monday.setDate(now.getDate() - ((dow + 6) % 7) + (offset * 7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toISOString().split('T')[0];
+  return {
+    entries: state.entries.filter(e => e.date >= fmt(monday) && e.date <= fmt(sunday)),
+    label: fmt(monday) + ' → ' + fmt(sunday),
+    monday, sunday
+  };
+}
+
+function renderInsights() {
+  const { entries, label } = getWeekEntries(insightWeekOffset);
+  document.getElementById('insights-week-label').textContent = label;
+  const el = document.getElementById('stats-insights');
+
+  if (!entries.length) {
+    el.innerHTML = `<div class="no-data-msg">No entries logged this week</div>`;
+    return;
+  }
+
+  // ── MISSED CRITERIA (non-perfect days only) ──
+  const imperfect = entries.filter(e => e.type !== 'perfect');
+  const missedCounts = {};
+  const missedDays = {};
+  state.criteria.forEach(c => { missedCounts[c.id] = 0; missedDays[c.id] = []; });
+
+  imperfect.forEach(e => {
+    state.criteria.forEach(c => {
+      if (!(e.checkedCriteria || []).includes(c.id)) {
+        missedCounts[c.id] = (missedCounts[c.id] || 0) + 1;
+        if (!missedDays[c.id]) missedDays[c.id] = [];
+        const d = new Date(e.date + 'T12:00:00');
+        missedDays[c.id].push(d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }));
+      }
+    });
+  });
+
+  const topMissed = state.criteria
+    .map(c => ({ ...c, missed: missedCounts[c.id] || 0, days: missedDays[c.id] || [] }))
+    .filter(c => c.missed > 0)
+    .sort((a, b) => b.missed - a.missed || b.weight - a.weight)
+    .slice(0, 3);
+
+  let missedHtml = '';
+  if (topMissed.length) {
+    missedHtml = `<div class="insight-block">
+      <div class="insight-heading">Top 3 habits costing you perfect days</div>
+      ${topMissed.map((c, i) => `
+        <div class="insight-item">
+          <span class="insight-rank">${i + 1}</span>
+          <div class="insight-body">
+            <div class="insight-name">${c.name}</div>
+            <div class="insight-meta">Missed on: ${c.days.join(', ')}</div>
+          </div>
+          <span class="insight-pct">${c.weight}pt</span>
+        </div>`).join('')}
+    </div>`;
+  } else {
+    missedHtml = `<div class="insight-block"><div class="insight-heading">Top missed habits</div><div class="no-data-msg" style="padding:16px 0;">Perfect week — nothing missed ◈</div></div>`;
+  }
+
+  // ── STREAKS THIS WEEK ──
+  const streakHtml = (() => {
+    const perfect = entries.filter(e => e.type === 'perfect').length;
+    const good = entries.filter(e => e.type === 'good').length;
+    const bad = entries.filter(e => e.type === 'bad').length;
+    const total = entries.length;
+    const avgScore = total ? Math.round(entries.reduce((s,e) => s + (e.maxScore ? e.score/e.maxScore*100 : 0), 0) / total) : 0;
+
+    // best and worst day
+    const sorted = [...entries].sort((a,b) => (b.score/b.maxScore||0) - (a.score/a.maxScore||0));
+    const best = sorted[0];
+    const worst = sorted[sorted.length-1];
+    const fmtD = d => new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'});
+
+    return `<div class="insight-block">
+      <div class="insight-heading">Week summary</div>
+      <div class="corr-item">
+        <span class="corr-highlight">${perfect}</span> perfect · <span class="corr-highlight">${good}</span> good · <span style="color:var(--red)">${bad}</span> bad out of <span class="corr-highlight">${total}</span> days logged
+      </div>
+      <div class="corr-item">Average daily score: <span class="corr-highlight">${avgScore}%</span></div>
+      ${best ? `<div class="corr-item">Best day: <span class="corr-highlight">${fmtD(best.date)}</span> — ${best.score}pts</div>` : ''}
+      ${worst && worst !== best ? `<div class="corr-item">Hardest day: <span style="color:var(--red)">${fmtD(worst.date)}</span> — ${worst.score}pts</div>` : ''}
+    </div>`;
+  })();
+
+  // ── CRITERIA NEVER HIT THIS WEEK ──
+  const neverHit = state.criteria.filter(c =>
+    entries.length > 0 && !entries.some(e => (e.checkedCriteria||[]).includes(c.id))
+  );
+  const neverHtml = neverHit.length ? `<div class="insight-block">
+    <div class="insight-heading">Not done once this week</div>
+    ${neverHit.map(c => `<div class="corr-item"><span style="color:var(--red)">✕</span> ${c.name} <span style="color:var(--text-dim)">(${c.weight}pt)</span></div>`).join('')}
+  </div>` : '';
+
+  el.innerHTML = `
+    <div class="week-nav">
+      <button class="week-nav-btn" onclick="shiftInsightWeek(-1)">← PREV</button>
+      <span class="week-label">${insightWeekOffset === 0 ? 'THIS WEEK' : insightWeekOffset === -1 ? 'LAST WEEK' : Math.abs(insightWeekOffset) + ' WEEKS AGO'}</span>
+      <button class="week-nav-btn" onclick="shiftInsightWeek(1)" ${insightWeekOffset === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''}>NEXT →</button>
+    </div>
+    ${missedHtml}
+    ${streakHtml}
+    ${neverHtml}
+  `;
+}
+
+function shiftInsightWeek(dir) {
+  insightWeekOffset = Math.min(0, insightWeekOffset + dir);
+  renderInsights();
+}
+
+// ── CRITERIA MANAGER ──
+function renderCriteriaManager() {
+  const el = document.getElementById('criteria-mgr-list');
+  document.getElementById('criteria-count-display').textContent = state.criteria.length + ' ITEMS';
+  if (!state.criteria.length) {
+    el.innerHTML = '<p style="font-size:10px;color:var(--text-dim);padding:12px 0;">No criteria defined.</p>';
+    return;
+  }
+  el.innerHTML = state.criteria.map(c => `
+    <div class="mgr-item">
+      <span class="mgr-item-name">${c.name}</span>
+      <span class="mgr-weight">${c.weight}pt</span>
+      <button class="mgr-del" onclick="deleteCriteria(${c.id})">✕</button>
+    </div>`).join('');
+}
+
+function addCriteria() {
+  const name = document.getElementById('new-criteria-name').value.trim();
+  const weight = parseInt(document.getElementById('new-criteria-weight').value) || 10;
+  if (!name) return showToast('ENTER CRITERIA NAME');
+  state.criteria.push({ id: state.nextCriteriaId++, name, weight });
+  save();
+  document.getElementById('new-criteria-name').value = '';
+  document.getElementById('new-criteria-weight').value = '10';
+  renderCriteriaManager();
+  renderCriteriaForm();
+  updateScoreDisplay();
+  showToast('CRITERIA ADDED');
+}
+
+function deleteCriteria(id) {
+  state.criteria = state.criteria.filter(c => c.id !== id);
+  state.checkedCriteria = state.checkedCriteria.filter(cid => cid !== id);
+  save();
+  renderCriteriaManager();
+  renderCriteriaForm();
+  updateScoreDisplay();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── REWARDS ──
+function getThisWeekBounds() {
+  const now = new Date(); now.setHours(12,0,0,0);
+  const dow = now.getDay();
+  const monday = new Date(now); monday.setDate(now.getDate() - ((dow + 6) % 7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toISOString().split('T')[0];
+  return { start: fmt(monday), end: fmt(sunday), monday, sunday };
+}
+
+function getWeekQualifyingDays() {
+  const { start, end } = getThisWeekBounds();
+  return state.entries.filter(e => e.date >= start && e.date <= end && (e.type === 'perfect' || e.type === 'good'));
+}
+
+function getConsecutivePerfectStreak() {
+  const sorted = [...state.entries]
+    .filter(e => e.type === 'perfect')
+    .sort((a, b) => b.date.localeCompare(a.date));
+  if (!sorted.length) return 0;
+  let streak = 0;
+  let check = today();
+  for (const e of sorted) {
+    if (e.date === check) {
+      streak++;
+      const d = new Date(check + 'T12:00:00'); d.setDate(d.getDate() - 1);
+      check = d.toISOString().split('T')[0];
+    } else if (e.date < check) break;
+  }
+  return streak;
+}
+
+function isWeekUnlocked() {
+  return getConsecutiveStreak() >= 5 || getConsecutivePerfectStreak() >= 3;
+}
+
+function isWeekClaimed() {
+  const { start } = getThisWeekBounds();
+  return state.claimedRewards.some(c => c.weekStart === start);
+}
+
+const REWARD_TAGS = {
+  '': { label: '', emoji: '' },
+  'experience': { label: 'Experience', emoji: '✨' },
+  'social': { label: 'Social', emoji: '👥' },
+  'health': { label: 'Health', emoji: '💪' },
+  'lady': { label: 'Lady of the Night', emoji: '🌙' },
+  'holiday': { label: 'Holiday', emoji: '✈️' },
+  'restaurant': { label: 'Restaurant', emoji: '🍴' },
+};
+
+// ── Streak bonus helpers ──
+function getConsecutiveStreak() {
+  // Count current streak of qualifying days (perfect or good), going backwards from today
+  const sorted = [...state.entries]
+    .filter(e => e.type === 'perfect' || e.type === 'good')
+    .sort((a, b) => b.date.localeCompare(a.date));
+  if (!sorted.length) return 0;
+  let streak = 0;
+  let check = today();
+  for (const e of sorted) {
+    if (e.date === check) {
+      streak++;
+      const d = new Date(check + 'T12:00:00'); d.setDate(d.getDate() - 1);
+      check = d.toISOString().split('T')[0];
+    } else if (e.date < check) break;
+  }
+  return streak;
+}
+
+function isStreakBonusUnlocked() {
+  return getConsecutiveStreak() >= 5;
+}
+
+// ── Holiday monthly check: 2 weeks of 5/5 within current calendar month ──
+function getHolidayMonthlyProgress() {
+  const now = new Date(); now.setHours(12);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  // Get all Mon-Sun weeks that overlap this month
+  const qualifyingWeeks = [];
+  const firstMonday = new Date(monthStart + 'T12:00:00');
+  const dow = firstMonday.getDay();
+  firstMonday.setDate(firstMonday.getDate() - ((dow + 6) % 7));
+
+  for (let w = 0; w < 6; w++) {
+    const wStart = new Date(firstMonday); wStart.setDate(firstMonday.getDate() + w * 7);
+    const wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
+    const ws = wStart.toISOString().split('T')[0];
+    const we = wEnd.toISOString().split('T')[0];
+    if (ws > monthEnd) break;
+    const profitDays = state.entries.filter(e =>
+      e.date >= ws && e.date <= we &&
+      (e.checkedCriteria || []).includes(10)
+    ).length;
+    if (profitDays >= 4) qualifyingWeeks.push(ws);
+  }
+  return qualifyingWeeks.length;
+}
+
+// Special unlock conditions per tag — extend this as needed
+const REWARD_CONDITIONS = {
+  'lady': {
+    check: () => {
+      const { start, end } = getThisWeekBounds();
+      const weekEntries = state.entries.filter(e => e.date >= start && e.date <= end);
+      const profitDays = weekEntries.filter(e => (e.checkedCriteria || []).includes(10)).length;
+      const semenDays = weekEntries.filter(e => (e.checkedCriteria || []).includes(13)).length;
+      return profitDays >= 2 && semenDays >= 3;
+    },
+    description: '5 good/perfect days + 2 × $100 profit days + 3 × semen retention this week',
+    progress: () => {
+      const { start, end } = getThisWeekBounds();
+      const weekEntries = state.entries.filter(e => e.date >= start && e.date <= end);
+      const profit = weekEntries.filter(e => (e.checkedCriteria || []).includes(10)).length;
+      const semen = weekEntries.filter(e => (e.checkedCriteria || []).includes(13)).length;
+      return `$100 days: ${profit}/2 · Semen retention: ${semen}/3`;
+    }
+  },
+  'restaurant': {
+    check: () => {
+      const { start, end } = getThisWeekBounds();
+      const weekEntries = state.entries.filter(e => e.date >= start && e.date <= end);
+      const profitDays = weekEntries.filter(e => (e.checkedCriteria || []).includes(10)).length;
+      const exerciseDays = weekEntries.filter(e => (e.checkedCriteria || []).includes(3)).length;
+      return profitDays >= 2 && exerciseDays >= 2;
+    },
+    description: '5 good/perfect days + 2 × $100 profit days + 2 × exercise days this week',
+    progress: () => {
+      const { start, end } = getThisWeekBounds();
+      const weekEntries = state.entries.filter(e => e.date >= start && e.date <= end);
+      const profit = weekEntries.filter(e => (e.checkedCriteria || []).includes(10)).length;
+      const exercise = weekEntries.filter(e => (e.checkedCriteria || []).includes(3)).length;
+      return `$100 days: ${profit}/2 · Exercise: ${exercise}/2`;
+    }
+  },
+  'holiday': {
+    check: () => getHolidayMonthlyProgress() >= 2,
+    description: '2 weeks in this month each with 4 × $100 profit days',
+    progress: () => `${getHolidayMonthlyProgress()}/2 qualifying weeks this month`
+  }
+};
+
+function getCriteriaForDate(dateStr) {
+  const dow = new Date(dateStr + 'T12:00:00').getDay();
+  const isSat = dow === 6; const isSun = dow === 0; const isFri = dow === 5;
+  const isWeekend = isSat || isSun;
+  return state.criteria.filter(c => {
+    if (SAT_REMOVED_IDS.includes(c.id) && isSat) return false;
+    if (SUN_REMOVED_IDS.includes(c.id) && isSun) return false;
+    if (FRI_SAT_REMOVED_IDS.includes(c.id) && (isFri || isSat)) return false;
+    return true;
+  }).concat(isWeekend ? [{ id: 18, name: 'Text, call or visit family or friend', weight: 10 }] : []);
+}
+
+function getAllCriteriaHitThisStreak() {
+  const streak = getConsecutiveStreak();
+  if (!streak) return { hit: new Set(), required: new Set() };
+  const sorted = [...state.entries]
+    .filter(e => e.type === 'perfect' || e.type === 'good')
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const streakEntries = sorted.slice(0, streak);
+  const hit = new Set();
+  const required = new Set();
+  streakEntries.forEach(e => {
+    // What was required on that day
+    getCriteriaForDate(e.date).forEach(c => required.add(c.id));
+    // What was ticked
+    (e.checkedCriteria || []).forEach(id => hit.add(id));
+  });
+  return { hit, required };
+}
+
+function getRewardUnlockStatus(r) {
+  // Base condition: 5 consecutive qualifying days OR 3 perfect in a row
+  if (!isWeekUnlocked()) return { ok: false, reason: (5 - Math.min(getConsecutiveStreak(), 5)) + ' more consecutive day(s) needed' };
+
+  // 3 perfect days = instant unlock, skip criteria check
+  if (!isPerfectStreakUnlocked()) {
+    // Every criterion required across streak days must be ticked at least once
+    const { hit, required } = getAllCriteriaHitThisStreak();
+    const missedIds = [...required].filter(id => !hit.has(id));
+    if (missedIds.length) {
+      const allCrit = [...state.criteria, { id: 18, name: 'Text, call or visit family or friend' }, { id: 19, name: '30 min Spanish practice' }];
+      const names = missedIds.map(id => { const c = allCrit.find(c => c.id === id); return c ? c.name : id; }).join(', ');
+      return { ok: false, reason: 'Not yet done this streak: ' + names };
+    }
+  }
+
+  // Extra conditions by tag
+  const cond = r.tag && REWARD_CONDITIONS[r.tag];
+  if (cond && !cond.check()) return { ok: false, reason: cond.description };
+  return { ok: true, reason: '' };
+}
+
+function addReward() {
+  const name = document.getElementById('new-reward-name').value.trim();
+  if (!name) return showToast('ENTER REWARD NAME');
+  const tag = document.getElementById('new-reward-tag').value;
+  state.rewards.push({ id: state.nextRewardId++, name, tag });
+  save();
+  document.getElementById('new-reward-name').value = '';
+  document.getElementById('new-reward-tag').value = '';
+  renderRewards();
+  showToast('REWARD ADDED');
+}
+
+function deleteReward(id) {
+  state.rewards = state.rewards.filter(r => r.id !== id);
+  save();
+  renderRewards();
+}
+
+function claimReward(id) {
+  if (isWeekClaimed()) return showToast('ALREADY CLAIMED THIS WEEK');
+  const reward = state.rewards.find(r => r.id === id);
+  if (!reward) return;
+  const status = getRewardUnlockStatus(reward);
+  if (!status.ok) return showToast('NOT UNLOCKED: ' + status.reason.toUpperCase());
+  const { start, end } = getThisWeekBounds();
+  state.claimedRewards.unshift({
+    id: Date.now(),
+    rewardId: id,
+    rewardName: reward.name,
+      rewardTag: reward.tag || '',
+      rewardNote: reward.note || '',
+    claimedDate: today(),
+    weekStart: start,
+    weekEnd: end
+  });
+  save();
+  renderRewards();
+  showToast('◈ REWARD CLAIMED — YOU EARNED IT');
+}
+
+function renderRewards() {
+  const { start, end, monday, sunday } = getThisWeekBounds();
+  const qualDays = getWeekQualifyingDays();
+  const streak = getConsecutiveStreak();
+  const perfectStreak = getConsecutivePerfectStreak();
+  const unlocked = streak >= 5 || perfectStreak >= 3;
+  const claimed = isWeekClaimed();
+
+  // week range label
+  const fmtShort = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  document.getElementById('reward-week-range').textContent = fmtShort(monday) + ' – ' + fmtShort(sunday);
+
+  // day pips
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const entry = state.entries.find(e => e.date === ds);
+    days.push({ ds, label: d.toLocaleDateString('en-GB', { weekday: 'short' }).slice(0,2).toUpperCase(), type: entry ? entry.type : 'empty' });
+  }
+
+  const pipsHtml = days.map(d => `
+    <div class="reward-day-pip ${d.type}">
+      <span>${d.label}</span>
+      <span>${d.type === 'perfect' ? '◈' : d.type === 'good' ? '◇' : d.type === 'bad' ? '✕' : '·'}</span>
+    </div>`).join('');
+
+  const claimedThisWeek = state.claimedRewards.find(c => c.weekStart === start);
+
+  document.getElementById('reward-status-body').innerHTML = `
+    ${unlocked && !claimed ? '<div class="unlock-banner">◈ WEEK UNLOCKED — CLAIM YOUR REWARD</div>' : ''}
+    ${claimed ? '<div class="unlock-banner" style="color:var(--green);border-color:rgba(77,179,126,0.3);background:var(--green-dim);">◇ REWARD CLAIMED THIS WEEK</div>' : ''}
+    <div class="reward-progress-wrap">
+      <div class="reward-progress-header">
+        <span class="reward-progress-num ${unlocked ? 'unlocked' : ''}">${Math.max(streak, perfectStreak)}</span>
+        <span class="reward-progress-denom">${perfectStreak >= 3 ? '/ 3 PERFECT ◈' : '/ 5 IN A ROW'}</span>
+      </div>
+      <div class="reward-track"><div class="reward-fill ${unlocked ? 'unlocked' : ''}" style="width:${unlocked ? 100 : Math.round(Math.max((streak/5),(perfectStreak/3))*100)}%"></div></div>
+      <div class="reward-status-msg ${unlocked ? 'unlocked' : ''}">
+        ${unlocked ? (claimed ? 'CLAIMED ◈' : 'UNLOCKED — PICK YOUR REWARD') : perfectStreak >= 2 ? '🔥 ' + (3 - perfectStreak) + ' MORE PERFECT DAY' + ((3-perfectStreak)!==1?'S':'') + ' — SO CLOSE' : streak >= 3 ? '🔥 ' + (5 - streak) + ' MORE DAY' + ((5-streak)!==1?'S':'') + ' — KEEP GOING' : (5 - Math.min(streak,5)) + ' GOOD/PERFECT IN A ROW OR 3 PERFECT'}
+      </div>
+    </div>
+    <div class="reward-days-row">${pipsHtml}</div>
+    ${claimedThisWeek ? `<div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;">Claimed: <span style="color:var(--gold)">${claimedThisWeek.rewardName}</span></div>` : ''}
+
+  `;
+
+  // reward list
+  document.getElementById('reward-count-display').textContent = state.rewards.length + ' REWARDS';
+  if (!state.rewards.length) {
+    document.getElementById('reward-list-body').innerHTML = '<p style="font-size:10px;color:var(--text-dim);letter-spacing:1px;padding:8px 0;">No rewards yet — add some below.</p>';
+  } else {
+    document.getElementById('reward-list-body').innerHTML = state.rewards.map(r => {
+      const tag = r.tag ? REWARD_TAGS[r.tag] : null;
+      const status = getRewardUnlockStatus(r);
+      const canClaim = status.ok && !claimed;
+      const hasCond = r.tag && REWARD_CONDITIONS[r.tag];
+      const prog = hasCond && REWARD_CONDITIONS[r.tag].progress ? REWARD_CONDITIONS[r.tag].progress() : null;
+      return `<div class="reward-item" style="flex-wrap:wrap;gap:6px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${tag && tag.emoji ? `<span style="font-size:13px;">${tag.emoji}</span>` : ''}
+            <span class="reward-item-name">${r.name}</span>
+            ${tag && tag.label ? `<span class="reward-tag-chip">${tag.label}</span>` : ''}
+            ${hasCond ? `<span style="font-size:8px;letter-spacing:1px;color:var(--text-dim);border:1px solid var(--border);padding:2px 6px;">SPECIAL</span>` : ''}
+          </div>
+          ${prog ? `<div style="font-size:9px;color:${status.ok ? 'var(--green)' : 'var(--text-dim)'};letter-spacing:0.5px;margin-top:4px;">${status.ok ? '✓' : '→'} ${prog}</div>` : ''}
+          ${hasCond && !status.ok && !prog ? `<div style="font-size:9px;color:var(--red);letter-spacing:0.5px;margin-top:4px;">🔒 ${status.reason}</div>` : ''}
+        </div>
+        <button class="reward-claim-btn" onclick="claimReward(${r.id})" ${!canClaim ? 'disabled' : ''}>CLAIM</button>
+        <button class="reward-del-btn" onclick="deleteReward(${r.id})">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  // claim history
+  if (!state.claimedRewards.length) {
+    document.getElementById('reward-history-body').innerHTML = '<p style="font-size:10px;color:var(--text-dim);letter-spacing:1px;padding:8px 0;">No rewards claimed yet.</p>';
+  } else {
+    document.getElementById('reward-history-body').innerHTML = state.claimedRewards.map(c => `
+      <div class="claim-hist-item">
+        <span class="claim-hist-date">${fmtDate(c.claimedDate)}</span>
+        <span class="claim-hist-name">
+          ${c.rewardTag && REWARD_TAGS[c.rewardTag] ? `<span style="margin-right:5px;">${REWARD_TAGS[c.rewardTag].emoji}</span>` : ''}${c.rewardName}
+          ${c.rewardNote ? `<span style="color:var(--text-dim);font-size:9px;display:block;margin-top:1px;">${c.rewardNote}</span>` : ''}
+        </span>
+        <span class="claim-hist-week">W/C ${fmtDate(c.weekStart)}</span>
+      </div>`).join('');
+  }
+
+  // badge on tab if unlocked and unclaimed
+  const tabBtn = document.getElementById('rewards-tab-btn');
+  if (tabBtn) {
+    tabBtn.textContent = (streak >= 5 && !claimed) ? 'REWARDS ◈' : 'REWARDS';
+    tabBtn.style.color = (streak >= 5 && !claimed) ? 'var(--gold)' : '';
+    tabBtn.style.borderColor = (streak >= 5 && !claimed) ? 'var(--gold)' : '';
+  }
+}
+
+// ── EDIT ENTRY ──
+let editingId = null;
+let editChecked = [];
+
+function openEditModal(id, e) {
+  e.stopPropagation();
+  const entry = state.entries.find(en => en.id === id);
+  if (!entry) return;
+  editingId = id;
+  editChecked = [...(entry.checkedCriteria || [])];
+  document.getElementById('edit-date').value = entry.date;
+  document.getElementById('edit-notes').value = entry.notes || '';
+  renderEditCriteria();
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function renderEditCriteria() {
+  const c = document.getElementById('edit-criteria-list');
+  c.innerHTML = state.criteria.map(cr => {
+    const checked = editChecked.includes(cr.id);
+    return `<div class="criteria-item ${checked ? 'checked' : ''}" onclick="toggleEditCriteria(${cr.id})">
+      <div class="check-box">${checked ? '✓' : ''}</div>
+      <span class="criteria-label">${cr.name}</span>
+      <span class="criteria-score">${cr.weight}pt</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleEditCriteria(id) {
+  const i = editChecked.indexOf(id);
+  if (i === -1) editChecked.push(id);
+  else editChecked.splice(i, 1);
+  renderEditCriteria();
+}
+
+function saveEditEntry() {
+  const entry = state.entries.find(en => en.id === editingId);
+  if (!entry) return;
+  const total = state.criteria.reduce((s, c) => s + c.weight, 0);
+  const earned = state.criteria.filter(c => editChecked.includes(c.id)).reduce((s,c) => s+c.weight, 0);
+  const pct = total ? (earned / total) * 100 : 0;
+  let type;
+  if (pct === 100 && state.criteria.length > 0) type = 'perfect';
+  else if (pct >= 70) type = 'good';
+  else type = 'bad';
+  entry.checkedCriteria = [...editChecked];
+  entry.score = earned;
+  entry.maxScore = total;
+  entry.type = type;
+  entry.notes = document.getElementById('edit-notes').value.trim();
+  save();
+  closeEditModal();
+  renderHistory();
+  renderRecentList();
+  renderSummary();
+  showToast('ENTRY UPDATED');
+}
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('edit-modal')) return;
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+  editChecked = [];
+}
+
+// ── CONFIRM DELETE ──
+function confirmDeleteEntry(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  state.entries = state.entries.filter(en => en.id !== id);
+  save();
+  renderHistory();
+  renderSummary();
+  renderRecentList();
+  showToast('ENTRY DELETED');
+}
+
+// ── EXPORT / IMPORT ──
+function exportData() {
+  const data = {
+    exported: new Date().toISOString(),
+    entries: state.entries,
+    criteria: state.criteria,
+    rewards: state.rewards,
+    claimedRewards: state.claimedRewards
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dayscore-backup-' + today() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('DATA EXPORTED');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.entries) return showToast('INVALID BACKUP FILE');
+      if (!confirm('This will replace all your current data. Continue?')) return;
+      state.entries = data.entries || [];
+      state.criteria = data.criteria || state.criteria;
+      state.rewards = data.rewards || [];
+      state.claimedRewards = data.claimedRewards || [];
+      save();
+      renderSummary();
+      renderRecentList();
+      renderCriteriaForm();
+      renderCriteriaManager();
+      renderRewards();
+      showToast('DATA IMPORTED ◈');
+    } catch(err) { showToast('IMPORT FAILED — INVALID FILE'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ── INIT ──
+function init() {
+  load();
+  initActiveDay();
+  renderCriteriaForm();
+  updateScoreDisplay();
+  checkUnclosedDay();
+  renderSummary();
+  renderRecentList();
+  renderCriteriaManager();
+  renderRewards();
+}
+
+init();
+</script>
+</body>
+</html>
